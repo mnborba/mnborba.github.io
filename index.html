@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Leads para Testes de Webhook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Animação de fade-in para a mensagem de status */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md">
+        <!-- Card principal -->
+        <div class="bg-slate-800/60 backdrop-blur-sm border border-slate-700 rounded-xl shadow-2xl shadow-blue-900/20">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Testador de Webhook</h1>
+                    <p class="text-slate-400">Insira sua URL de webhook e envie dados de teste para validar sua automação.</p>
+                </div>
+
+                <!-- Formulário de captura -->
+                <form id="leadForm" class="space-y-6">
+                    <!-- Campo Webhook URL -->
+                    <div>
+                        <label for="webhookUrl" class="block text-sm font-medium text-slate-300 mb-2">URL do Webhook (n8n, Zapier, etc.)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg>
+                            </span>
+                            <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://seu.webhook.url/aqui" required
+                                class="w-full bg-slate-900/70 border border-slate-700 rounded-lg py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300">
+                        </div>
+                    </div>
+
+                    <!-- Campos de dados do Lead -->
+                    <div class="grid grid-cols-1 gap-6 pt-4 border-t border-slate-700">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-slate-300 mb-2">Nome Completo</label>
+                            <input type="text" id="name" name="name" placeholder="Seu Nome" required
+                                class="w-full bg-slate-900/70 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-300 mb-2">E-mail</label>
+                            <input type="email" id="email" name="email" placeholder="seu.email@exemplo.com" required
+                                class="w-full bg-slate-900/70 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-slate-300 mb-2">Telefone</label>
+                            <input type="tel" id="phone" name="phone" placeholder="(99) 99999-9999" required
+                                class="w-full bg-slate-900/70 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300">
+                        </div>
+                    </div>
+
+                    <!-- Botão de Envio -->
+                    <div>
+                        <button type="submit" id="submitButton"
+                            class="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-0.5 transition-all duration-300">
+                            <span id="buttonText">Enviar Dados de Teste</span>
+                            <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+
+                 <!-- Mensagem de Status (Sucesso/Erro) -->
+                <div id="statusMessage" class="mt-6 text-center text-sm"></div>
+            </div>
+        </div>
+        <footer class="text-center mt-6 text-slate-500 text-xs">
+            <p>Criado para testes de integração com webhooks.</p>
+        </footer>
+    </div>
+
+    <script>
+        const leadForm = document.getElementById('leadForm');
+        const submitButton = document.getElementById('submitButton');
+        const buttonText = document.getElementById('buttonText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const statusMessage = document.getElementById('statusMessage');
+
+        leadForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const webhookUrl = document.getElementById('webhookUrl').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            // Validação simples da URL
+            if (!webhookUrl || !webhookUrl.startsWith('http')) {
+                displayMessage('Por favor, insira uma URL de webhook válida.', 'error');
+                return;
+            }
+
+            // Ativa o estado de carregamento
+            setLoading(true);
+
+            // Objeto com os dados a serem enviados
+            const leadData = {
+                name,
+                email,
+                phone,
+                source: 'Testador de Webhook',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(leadData),
+                });
+                
+                // O Webhook do n8n geralmente responde com 200 OK
+                if (response.ok) {
+                    displayMessage('Dados enviados com sucesso!', 'success');
+                    // Limpa apenas os campos do lead
+                    document.getElementById('name').value = '';
+                    document.getElementById('email').value = '';
+                    document.getElementById('phone').value = '';
+                } else {
+                    // Se o status for 404, damos uma mensagem mais específica, pois é o erro reportado.
+                    if (response.status === 404) {
+                         displayMessage('Erro 404: Webhook não encontrado ou não está configurado para aceitar dados (POST). Verifique a URL e a sua automação.', 'error');
+                    } else {
+                        // Para outros erros HTTP, tentamos mostrar o status.
+                        const errorText = await response.text();
+                        console.error(`Falha no envio. Status: ${response.status}`, errorText);
+                        displayMessage(`Falha no envio. Status: ${response.status}. Verifique o console para mais detalhes.`, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro de rede ao enviar para o webhook:', error);
+                displayMessage(`Erro de conexão. Verifique sua rede e se a URL do webhook está correta e permite CORS.`, 'error');
+            } finally {
+                // Desativa o estado de carregamento
+                setLoading(false);
+            }
+        });
+        
+        // Função para exibir mensagens de status
+        function displayMessage(message, type) {
+            statusMessage.innerHTML = ''; // Limpa a mensagem anterior
+            statusMessage.className = 'mt-6 text-center text-sm fade-in'; // Reseta as classes e adiciona a de animação
+            
+            if (type === 'success') {
+                statusMessage.classList.add('text-green-400');
+            } else {
+                statusMessage.classList.add('text-red-400');
+            }
+            
+            statusMessage.textContent = message;
+
+            // Remove a mensagem após 5 segundos
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 5000);
+        }
+
+        // Função para controlar o estado de carregamento do botão
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitButton.disabled = true;
+                buttonText.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+            } else {
+                submitButton.disabled = false;
+                buttonText.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+    </script>
+
+</body>
+</html>
+
